@@ -8,7 +8,7 @@
 ***********************************************************************************************************************/
 /*
 	global Config, DebugView, EOF, Engine, Lexer, Macro, MacroContext, Patterns, Scripting, State, Story, Template,
-	       Wikifier, toStringOrDefault, throwError
+	       Wikifier, stringFrom, throwError
 */
 /* eslint "no-param-reassign": [ 2, { "props" : false } ] */
 
@@ -1035,15 +1035,17 @@
 				$variable["property"]
 				$variable['property']
 				$variable[$indexOrPropertyVariable]
+
+			NOTE: I really do not like how the initial bit of the regexp matches.
 		*/
 		name     : 'nakedVariable',
 		profiles : ['core'],
 		match    : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[${Patterns.variable}\\]))*`,
 
 		handler(w) {
-			const result = toStringOrDefault(State.getVar(w.matchText), null);
+			const result = State.getVar(w.matchText);
 
-			if (result === null) {
+			if (result == null) { // lazy equality for null
 				jQuery(document.createTextNode(w.matchText)).appendTo(w.output);
 			}
 			else {
@@ -1052,7 +1054,7 @@
 						? new DebugView(w.output, 'variable', w.matchText, w.matchText) // Debug view setup.
 						: w
 					).output,
-					result
+					stringFrom(result)
 				);
 			}
 		}
@@ -1076,7 +1078,7 @@
 			switch (typeof template) {
 			case 'function':
 				try {
-					result = toStringOrDefault(template.call({ name }), null);
+					result = stringFrom(template.call({ name }));
 				}
 				catch (ex) {
 					return throwError(
